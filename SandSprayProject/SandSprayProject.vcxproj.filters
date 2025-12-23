@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Project">
+      <UniqueIdentifier>{14513f33-3573-4187-8588-0958a8278493}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Project\HeaderFile">
+      <UniqueIdentifier>{309893fd-eb4b-4616-8304-13874b4316dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Project\SourceFile">
+      <UniqueIdentifier>{514bd6ba-a9ea-40b8-880d-e74f354272d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Project\Entry">
+      <UniqueIdentifier>{0c35ea91-86fd-4d00-a54d-786c55e6b267}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Project\HeaderFile\Dialog">
+      <UniqueIdentifier>{da6b049c-9b74-4ef7-b46d-227fc0e9d49e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Project\HeaderFile\ToolClass">
+      <UniqueIdentifier>{0044af83-f95c-440a-8be1-6d138c54669b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Project\SourceFile\Dialog">
+      <UniqueIdentifier>{a0f2dfe1-17b3-4256-9a1f-a0ab74fdf4dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Project\SourceFile\ToolClass">
+      <UniqueIdentifier>{9811a922-c997-40ca-b6ab-b06e2dea77f3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SandSprayProject.cpp">
+      <Filter>Project\Entry</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometricProcessFaceClassification.cpp">
+      <Filter>Project\SourceFile\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="SprayEffectEvalutatorDialog.cpp">
+      <Filter>Project\SourceFile\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="SprayCurveBuilder.cpp">
+      <Filter>Project\SourceFile\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="FaceProcessor.cpp">
+      <Filter>Project\SourceFile\ToolClass</Filter>
+    </ClCompile>
+    <ClCompile Include="HelpFunction.cpp">
+      <Filter>Project\SourceFile\ToolClass</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionBuilder.cpp">
+      <Filter>Project\SourceFile\ToolClass</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionCurveBuilder.cpp">
+      <Filter>Project\SourceFile\ToolClass</Filter>
+    </ClCompile>
+    <ClCompile Include="regionstruct.cpp">
+      <Filter>Project\SourceFile\ToolClass</Filter>
+    </ClCompile>
+    <ClCompile Include="SprayEffectEvaluator.cpp">
+      <Filter>Project\SourceFile\ToolClass</Filter>
+    </ClCompile>
+    <ClCompile Include="SprayPathSequencer.cpp">
+      <Filter>Project\SourceFile\ToolClass</Filter>
+    </ClCompile>
+    <ClCompile Include="SpraySequencerandCSVOutputDialog.cpp">
+      <Filter>Project\SourceFile\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneticAlgorithm.cpp">
+      <Filter>Project\SourceFile\ToolClass</Filter>
+    </ClCompile>
+    <ClCompile Include="CSVExporter.cpp">
+      <Filter>Project\SourceFile\ToolClass</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GeometricProcessFaceClassification.hpp">
+      <Filter>Project\HeaderFile\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="SprayEffectEvalutatorDialog.hpp">
+      <Filter>Project\HeaderFile\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="SprayCurveBuilder.hpp">
+      <Filter>Project\HeaderFile\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="FaceProcessor.h">
+      <Filter>Project\HeaderFile\ToolClass</Filter>
+    </ClInclude>
+    <ClInclude Include="HelpFunction.h">
+      <Filter>Project\HeaderFile\ToolClass</Filter>
+    </ClInclude>
+    <ClInclude Include="RegionBuilder.h">
+      <Filter>Project\HeaderFile\ToolClass</Filter>
+    </ClInclude>
+    <ClInclude Include="RegionCurveBuilder.h">
+      <Filter>Project\HeaderFile\ToolClass</Filter>
+    </ClInclude>
+    <ClInclude Include="regionstruct.h">
+      <Filter>Project\HeaderFile\ToolClass</Filter>
+    </ClInclude>
+    <ClInclude Include="SprayEffectEvaluator.h">
+      <Filter>Project\HeaderFile\ToolClass</Filter>
+    </ClInclude>
+    <ClInclude Include="SprayPathSequencer.h">
+      <Filter>Project\HeaderFile\ToolClass</Filter>
+    </ClInclude>
+    <ClInclude Include="SpraySequencerandCSVOutputDialog.hpp">
+      <Filter>Project\HeaderFile\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneticAlgorithm.h">
+      <Filter>Project\HeaderFile\ToolClass</Filter>
+    </ClInclude>
+    <ClInclude Include="CSVExporter.h">
+      <Filter>Project\HeaderFile\ToolClass</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
