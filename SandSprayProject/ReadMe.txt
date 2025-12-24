@@ -22,7 +22,7 @@
 * **代码模块**: `RegionCurveBuilder`, `SprayCurveBuilder`
 * **功能**:
     * **边界引导**: 基于区域边界生成样条导引线 (Spline Guide)。
-    * **自适应切片**: 采用“三段式多候选点位分布算法” (`OptimizedMultiCandidateAlgorithm`)，在保证重叠率的前提下自适应调整步距，解决边缘覆盖不足问题。
+    * **自适应切片**: 在保证重叠率的前提下自适应调整步距，解决边缘覆盖不足问题。
     * **智能连接**: 自动处理断开的路径段，通过 `ConnectPathPointsWithRingSupport` 算法生成连续轨迹。
 
 ### 2.3 全局序列优化 (Global Sequence Optimization)
