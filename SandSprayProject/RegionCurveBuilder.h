@@ -161,9 +161,9 @@ private:
         FaceRegionType regionType,
         int pathIndex);
 
+    std::vector<Point3d> GetPointsOnIntersectionCurve2(tag_t curve, const Point3d& referencePoint);
 
-
-
+    std::vector<double> OptimizedBoundaryBufferedSampling(double totalLength, double stepDistance, bool reverseDirection);
 };
 
 #endif // REGIONCURVEBUILDER_H

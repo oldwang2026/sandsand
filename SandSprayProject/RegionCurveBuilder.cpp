@@ -1170,7 +1170,7 @@ std::vector<Point3d> RegionCurveBuilder::GetPointsOnLineForPlanarRingRegion(
     bool reverseDirection = (distToEnd1 < distToStart1);  // 终点更近则反向
 
     // 调用优化算法获取点位序列（弧长位置）
-    std::vector<double> lengths = OptimizedMultiCandidateAlgorithm(
+    std::vector<double> lengths = OptimizedBoundaryBufferedSampling(
         totalLength,
         m_stepDistance,
         reverseDirection
@@ -2213,15 +2213,15 @@ bool RegionCurveBuilder::GenerateSprayPathForRegion(Region& region)
                 std::vector<Point3d> pointsOnCurve;
 
                 if (!isFilletRegion) {
-                    // 平面环形区域：在相交曲线两端点连成的直线上取点
+                    
                     pointsOnCurve = GetPointsOnLineForPlanarRingRegion(
                         curveDataList[i].curveTag,
                         curveDataList[i].controlPoint
                     );
                 }
                 else {
-                    // 其他区域：在截线上按固定步距取点
-                    pointsOnCurve = GetPointsOnIntersectionCurve(
+                    
+                    pointsOnCurve = GetPointsOnIntersectionCurve2(
                         curveDataList[i].curveTag,
                         curveDataList[i].controlPoint
                     );
@@ -2316,4 +2316,180 @@ void RegionCurveBuilder::CleanupNonPathCurves()
             UF_OBJ_delete_object(todelete);
         }
     }
+}
+
+
+// ======================================================================================
+// [核心算法] 基于边界缓冲的确定性采样策略 (Boundary-Buffered Deterministic Sampling)
+// ======================================================================================
+// 适用场景：常规加工域 (L > 2.2*S)
+// 核心逻辑：
+// 1. 覆盖率优先：强制 N = ceil(L/S)，确保实际步距 S' <= S (宁密勿疏)。
+// 2. 边界缓冲：优先保持 S' = S，利用边界偏置 O 在 [0.25S, 0.5S] 之间的弹性来吸收几何余量。
+// 3. 强制对称：O_start = O_end，消除路径 S 形抖动。
+// ======================================================================================
+std::vector<double> RegionCurveBuilder::OptimizedBoundaryBufferedSampling(
+    double totalLength,
+    double stepDistance,
+    bool reverseDirection)
+{
+    std::vector<double> lengths;
+
+    // 1. 定义工艺约束常量
+    const double S_ideal = stepDistance;
+    const double O_min = 0.25 * S_ideal; // 最小偏置 (防过喷)
+    // O_max (0.5*S) 在计算 N=ceil(L/S) 时已隐含满足，无需显式校验
+
+    // 2. 确定最少点数 N
+    // 逻辑：计算在最大覆盖能力 (S_ideal + 两头最大偏置) 下所需的最小点数
+    // 公式推导：L_max = (N-1)*S + 2*O_max = (N-1)*S + S = N*S
+    // 因此 N_min = ceil(L / S)
+    int N = (int)std::ceil(totalLength / S_ideal);
+
+    // 边界情况修正：虽然 L > 2.2S 肯定保证 N >= 3，但为了通用性保留此检查
+    if (N < 2) N = 2;
+
+    // 3. 计算参数 (尝试维持理想步距)
+    double S_actual;
+    double O_actual;
+
+    // 计算如果步距拉满到 S_ideal，两头剩余的总空间
+    double total_gap = totalLength - (N - 1) * S_ideal;
+    double O_try = total_gap / 2.0;
+
+    // 4. 分支判断：边界缓冲是否够用？
+    if (O_try >= O_min) {
+        // [场景 A：缓冲充足]
+        // 即使步距保持 80mm，两头偏置依然大于 20mm (在 20~40mm 之间)。
+        // 策略：步距不压缩，直接利用边界弹性。
+        S_actual = S_ideal;
+        O_actual = O_try;
+    }
+    else {
+        // [场景 B：缓冲不足 (步距突变区)]
+        // 例如 L 刚刚超过 N*S 的临界点，导致余量极小，甚至 O_try 为负。
+        // 策略：锁死边界为最小值，强行压缩步距。
+        O_actual = O_min;
+        S_actual = (totalLength - 2.0 * O_min) / (double)(N - 1);
+        // S_actual 此时必然小于 S_ideal，满足覆盖率要求。
+    }
+
+    // 5. 生成点位序列 (绝对对称)
+    for (int i = 0; i < N; i++) {
+        double pos = O_actual + i * S_actual;
+        lengths.push_back(pos);
+    }
+
+    // 6. 方向处理
+    if (reverseDirection) {
+        std::reverse(lengths.begin(), lengths.end());
+    }
+
+    return lengths;
+}
+
+// ======================================================================================
+// [主函数] 基于多尺度几何特征的自适应分级采样 (Adaptive Multi-scale Sampling)
+// ======================================================================================
+std::vector<Point3d> RegionCurveBuilder::GetPointsOnIntersectionCurve2(
+    tag_t curve,
+    const Point3d& referencePoint)
+{
+    std::vector<Point3d> points;
+    if (curve == NULL_TAG) {
+        return points;
+    }
+
+    // 1. 获取几何属性：端点、长度、方向
+    double startPoint[3], endPoint[3];
+    ask_curve_point(curve, 0.0, startPoint);
+    ask_curve_point(curve, 1.0, endPoint);
+    Point3d curveStart(startPoint[0], startPoint[1], startPoint[2]);
+    Point3d curveEnd(endPoint[0], endPoint[1], endPoint[2]);
+
+    // 判断方向：距离参考点（上一条线的终点）较近的端点作为起点
+    double distToStart = PointDistance(referencePoint, curveStart);
+    double distToEnd = PointDistance(referencePoint, curveEnd);
+    bool reverseDirection = (distToEnd < distToStart);
+
+    if (m_stepDistance <= 0) {
+        CalculateStepDistance();
+    }
+
+    // 获取曲线总长度
+    double totalLength = 0.0;
+    int status = UF_CURVE_ask_arc_length(
+        curve, 0.0, 1.0, UF_MODL_UNITS_PART, &totalLength
+    );
+
+    if (status != 0 || totalLength <= 0.0) {
+        return points;
+    }
+
+    // 2. 执行三级分级采样策略
+    std::vector<double> lengths; // 存储计算出的弧长位置
+
+    // 定义特征阈值
+    const double S = m_stepDistance;
+    const double Threshold_Micro = S;            // 微小特征阈值 (L <= 80mm)
+    const double Threshold_Transition = 2.2 * S; // 过渡特征阈值 (80mm < L <= 176mm)
+
+    // --- [Stage 1: 微小几何域] ---
+    // 物理特征：截交线长度不足一个标准光斑直径。
+    // 策略：退化为单点采样，强制居中。
+    if (totalLength <= Threshold_Micro) {
+        lengths.push_back(totalLength / 2.0);
+    }
+
+    // --- [Stage 2: 几何过渡域] ---
+    // 物理特征：长度介于 1~2.2 个步距之间，容易出现采样点跳变。
+    // 策略：比例锚定策略 (Proportional Anchoring)。
+    // 强制使用 2 个点，固定在 L/4 和 3L/4 处，确保两端覆盖对称，牺牲中间步距。
+    else if (totalLength <= Threshold_Transition) {
+        double offset = totalLength / 4.0;
+        lengths.push_back(offset);             // 第1点
+        lengths.push_back(totalLength - offset); // 第2点
+
+        // 注意：这里需要处理反向逻辑，因为下面的通用反向是针对 lengths 的
+        if (reverseDirection) {
+            std::reverse(lengths.begin(), lengths.end());
+        }
+    }
+
+    // --- [Stage 3: 常规加工域] ---
+    // 物理特征：长线段，步距波动和边界偏移是主要矛盾。
+    // 策略：启用“边界缓冲优化算法” (Boundary-Buffered Optimization)。
+    else {
+        // 调用新算法 (注意：传入 reverseDirection 让内部处理)
+        lengths = OptimizedBoundaryBufferedSampling(totalLength, S, reverseDirection);
+    }
+
+    // 3. 将弧长序列映射为三维坐标点
+    for (double len : lengths) {
+        double parameter = 0.0;
+        int result = PDCAPP_COM_ask_param_to_arclength(curve, len, &parameter);
+        if (result == 0) {
+            double point[3];
+            ask_curve_point(curve, parameter, point);
+            points.emplace_back(point[0], point[1], point[2]);
+        }
+    }
+
+    // 4. 日志记录 (可选，用于调试验证算法稳定性)
+#ifdef _MYDEBUG
+    std::ofstream logFile("E:\\vsproject\\SandSprayProject\\Sampling_Log.txt", std::ios::app);
+    if (logFile.is_open()) {
+        logFile << "L=" << std::fixed << std::setprecision(2) << totalLength
+            << " | N=" << lengths.size();
+        if (lengths.size() >= 2) {
+            double actualStep = std::abs(lengths[1] - lengths[0]);
+            double actualOffset = (totalLength - (lengths.size() - 1) * actualStep) / 2.0;
+            logFile << " | Step=" << actualStep << " | Offset=" << actualOffset;
+        }
+        logFile << "\n";
+        logFile.close();
+    }
+#endif
+
+    return points;
 }
