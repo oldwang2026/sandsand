@@ -389,37 +389,46 @@ CSVExporter::ExtractPointsFromCurve(
 }
 
 // Main CSV export function
+// Main CSV export function
 void CSVExporter::ExportCSVFiles(
     const std::vector<NXOpen::TaggedObject*>& csv_curve_select,
     double sprayAngle,
-    const SprayPathSequencer& sequencer,
+    const SprayPathConnector& sequencer, // <--- 修改 1: 类型更新
     const char* outputDir)
 {
     try {
-        
+
         if (csv_curve_select.empty()) {
-            return; 
+            return;
         }
 
-        
+
         struct stat info;
         if (stat(outputDir, &info) != 0) {
             // Directory doesn't exist, create it
             _mkdir(outputDir);
         }
 
-        
+
         std::string timestamp = GetCurrentTimestamp();
 
-       
+
         std::unordered_map<tag_t, bool> curveDirectionMap;
+
+        // 获取优化后的序列
         std::vector<std::pair<int, bool>> sequence = sequencer.getFinalSequence();
 
         if (!sequence.empty()) {
-           
+
             for (const auto& item : sequence) {
                 int pathIndex = item.first;
-                bool isReversed = item.second;
+
+                // <--- 修改 2: 逻辑转换开始 --->
+                // item.second 是 entryIsStart (true = 从起点进 = 正向)
+                // extractPoints 需要 isReversed (true = 反向)
+                // 所以逻辑取反：
+                bool isReversed = !item.second;
+                // <--- 修改 2: 逻辑转换结束 --->
 
                 if (pathIndex >= 0 && pathIndex < csv_curve_select.size()) {
                     NXOpen::NXObject* obj = dynamic_cast<NXOpen::NXObject*>(csv_curve_select[pathIndex]);
@@ -430,10 +439,10 @@ void CSVExporter::ExportCSVFiles(
             }
         }
 
-        
+
         int successCount = 0;
         for (size_t i = 0; i < csv_curve_select.size(); i++) {
-           
+
             NXOpen::NXObject* nxObj = dynamic_cast<NXOpen::NXObject*>(csv_curve_select[i]);
             if (nxObj == nullptr) continue;
 
@@ -443,26 +452,28 @@ void CSVExporter::ExportCSVFiles(
             try {
                 int typeValue = nxObj->GetIntegerAttribute("RegionType");
                 regionType = static_cast<FaceRegionType>(typeValue);
-            } catch (...) {
-               
+            }
+            catch (...) {
+
             }
 
-  
+
             tag_t regionBodyTag = NULL_TAG;
             try {
                 regionBodyTag = nxObj->GetIntegerAttribute("RegionTag");
-            } catch (...) {
+            }
+            catch (...) {
 
             }
 
-           
+
             bool isReversed = false;
             auto it = curveDirectionMap.find(curveTag);
             if (it != curveDirectionMap.end()) {
                 isReversed = it->second;
             }
 
-           
+
             std::vector<RobotPathPoint> points =
                 ExtractPointsFromCurve(curveTag, 10.0, sprayAngle, isReversed, regionType, regionBodyTag);
 
@@ -470,7 +481,7 @@ void CSVExporter::ExportCSVFiles(
                 continue;  // skip invalid curve
             }
 
-           
+
             std::string filename = GenerateCSVFileName(i + 1, timestamp);
 
             // Write CSV file
@@ -480,7 +491,7 @@ void CSVExporter::ExportCSVFiles(
         }
     }
     catch (...) {
-        
+
         return;
     }
 }

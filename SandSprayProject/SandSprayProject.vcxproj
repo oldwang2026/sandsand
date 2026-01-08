@@ -116,7 +116,6 @@
   <ItemGroup>
     <ClCompile Include="CSVExporter.cpp" />
     <ClCompile Include="FaceProcessor.cpp" />
-    <ClCompile Include="GeneticAlgorithm.cpp" />
     <ClCompile Include="GeometricProcessFaceClassification.cpp" />
     <ClCompile Include="HelpFunction.cpp" />
     <ClCompile Include="RegionBuilder.cpp" />
@@ -126,13 +125,12 @@
     <ClCompile Include="SprayCurveBuilder.cpp" />
     <ClCompile Include="SprayEffectEvaluator.cpp" />
     <ClCompile Include="SprayEffectEvalutatorDialog.cpp" />
-    <ClCompile Include="SprayPathSequencer.cpp" />
+    <ClCompile Include="SprayPathConnector.cpp" />
     <ClCompile Include="SpraySequencerandCSVOutputDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CSVExporter.h" />
     <ClInclude Include="FaceProcessor.h" />
-    <ClInclude Include="GeneticAlgorithm.h" />
     <ClInclude Include="GeometricProcessFaceClassification.hpp" />
     <ClInclude Include="HelpFunction.h" />
     <ClInclude Include="RegionBuilder.h" />
@@ -141,7 +139,7 @@
     <ClInclude Include="SprayCurveBuilder.hpp" />
     <ClInclude Include="SprayEffectEvaluator.h" />
     <ClInclude Include="SprayEffectEvalutatorDialog.hpp" />
-    <ClInclude Include="SprayPathSequencer.h" />
+    <ClInclude Include="SprayPathConnector.h" />
     <ClInclude Include="SpraySequencerandCSVOutputDialog.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include "regionstruct.h"
-#include "SprayPathSequencer.h"
+#include "SprayPathConnector.h"
 
 //==============================================================================
 // CSV Export Tool Class (Static utility class, cannot be instantiated)
@@ -40,7 +40,7 @@ public:
     static void ExportCSVFiles(
         const std::vector<NXOpen::TaggedObject*>& csv_curve_select,
         double sprayAngle,
-        const SprayPathSequencer& sequencer,
+        const SprayPathConnector& sequencer,
         const char* outputDir = "E:\\vsproject\\SandSprayProject\\txtfile"
     );
 

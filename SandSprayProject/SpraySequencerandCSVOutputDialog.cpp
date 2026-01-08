@@ -415,13 +415,16 @@ void SpraySequencerandCSVOutputDialog::PopulateCurveSequenceList()
     std::vector<NXString> itemStrings;
     for (size_t i = 0; i < sequence.size(); i++) {
         int pathIdx = sequence[i].first;
-        bool isReversed = sequence[i].second;
+
+        //  bool 含义是 entryIsStart (true=正向, false=反向)
+        bool entryIsStart = sequence[i].second;
 
         // 格式: "序号  1: 路径  5 [正向]"
         std::stringstream ss;
-        ss << "序号 " << std::setw(3) << (i+1)
-           << ": 路径 " << std::setw(3) << pathIdx
-           << (isReversed ? " [反向]" : " [正向]");
+        ss << "序号 " << std::setw(3) << (i + 1)
+            << ": 路径 " << std::setw(3) << pathIdx
+            << (entryIsStart ? " [正向]" : " [反向]"); // <--- 修改这里：判断逻辑反转
+        // --- 修改结束 ---
 
         itemStrings.push_back(ss.str());
     }
@@ -429,7 +432,7 @@ void SpraySequencerandCSVOutputDialog::PopulateCurveSequenceList()
     // 设置列表项
     PropertyList* listProps = curve_sequence_list->GetProperties();
     listProps->SetStrings("ListItems", itemStrings);
-    delete listProps;   
+    delete listProps;
 }
 
 //------------------------------------------------------------------------------

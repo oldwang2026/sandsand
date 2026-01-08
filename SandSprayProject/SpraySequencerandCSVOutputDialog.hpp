@@ -41,7 +41,8 @@
 //------------------------------------------------------------------------------
 // 自定义包含
 //------------------------------------------------------------------------------
-#include "SprayPathSequencer.h"
+#include "SprayPathConnector.h"
+//#include "SprayPathSequencer.h"
 #include "CSVExporter.h"
 #include <sstream>
 #include <iomanip>
@@ -167,12 +168,13 @@ private:
     //==========================================================================
     // 自定义成员变量和方法
     //==========================================================================
-    SprayPathSequencer m_pathSequencer;  // 路径优化器实例
+    SprayPathConnector m_pathSequencer;  // 路径优化器实例
 
     // 主要功能方法
     void OptimizeAndDisplayPaths();      // 执行优化并显示结果
     void SetStartConstraints();          // 设置起点约束
     void PopulateCurveSequenceList();    // 填充结果列表
+
 
     // 消息弹窗辅助函数
     void ShowErrorMessage(const char* message);
@@ -181,6 +183,6 @@ private:
 
     // CSV导出相关（委托给 CSVExporter 工具类）
     void ExportCSVFiles();  // UI 回调函数，调用 CSVExporter::ExportCSVFiles
-
+    
 };
 #endif //SPRAYSEQUENCERANDCSVOUTPUTDIALOG_H_INCLUDED

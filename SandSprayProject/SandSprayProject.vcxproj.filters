@@ -60,16 +60,13 @@
     <ClCompile Include="SprayEffectEvaluator.cpp">
       <Filter>Project\SourceFile\ToolClass</Filter>
     </ClCompile>
-    <ClCompile Include="SprayPathSequencer.cpp">
-      <Filter>Project\SourceFile\ToolClass</Filter>
-    </ClCompile>
     <ClCompile Include="SpraySequencerandCSVOutputDialog.cpp">
       <Filter>Project\SourceFile\Dialog</Filter>
     </ClCompile>
-    <ClCompile Include="GeneticAlgorithm.cpp">
+    <ClCompile Include="CSVExporter.cpp">
       <Filter>Project\SourceFile\ToolClass</Filter>
     </ClCompile>
-    <ClCompile Include="CSVExporter.cpp">
+    <ClCompile Include="SprayPathConnector.cpp">
       <Filter>Project\SourceFile\ToolClass</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,16 +98,13 @@
     <ClInclude Include="SprayEffectEvaluator.h">
       <Filter>Project\HeaderFile\ToolClass</Filter>
     </ClInclude>
-    <ClInclude Include="SprayPathSequencer.h">
-      <Filter>Project\HeaderFile\ToolClass</Filter>
-    </ClInclude>
     <ClInclude Include="SpraySequencerandCSVOutputDialog.hpp">
       <Filter>Project\HeaderFile\Dialog</Filter>
     </ClInclude>
-    <ClInclude Include="GeneticAlgorithm.h">
+    <ClInclude Include="CSVExporter.h">
       <Filter>Project\HeaderFile\ToolClass</Filter>
     </ClInclude>
-    <ClInclude Include="CSVExporter.h">
+    <ClInclude Include="SprayPathConnector.h">
       <Filter>Project\HeaderFile\ToolClass</Filter>
     </ClInclude>
   </ItemGroup>
