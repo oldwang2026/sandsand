@@ -148,6 +148,8 @@ private:
     void applyRelocate(std::vector<int>& order);
     void apply2Opt(std::vector<int>& order);
 
+    void runHillClimbingBenchmark(const std::vector<int>& initOrder);
+
     // SA 主循环
     std::vector<int> simulatedAnnealing(const std::vector<int>& initOrder);
 
@@ -155,6 +157,9 @@ private:
     void commitResult(const std::vector<int>& order,
         const std::vector<bool>& entryFlags,
         double totalAirMove);
+
+    // 计算给定顺序和给定方向组合的总距离
+    double calculateFixedSequenceCost(const std::vector<int>& order, const std::vector<bool>& entryFlags) const;
 };
 
 #endif // SPRAYPATHCONNECTOR_H_INCLUDED

@@ -330,22 +330,100 @@ std::pair<double, std::vector<bool>> SprayPathConnector::evaluateSequenceWithDP(
 
 void SprayPathConnector::solve()
 {
+    // 0. 基础检查
     if (paths.empty()) return;
 
-    // 1. 构建距离缓存
+    // 1. 构建距离缓存 (必须第一步做，后续所有计算都依赖它)
     buildDistanceCache();
 
-    // 2. 生成初始解
+    // 2. 生成初始解 
+    // (内部会生成图1数据: Initialization_Distribution.csv)
     std::vector<int> currentOrder = generateInitialSequence();
 
-    // 3. 执行模拟退火
+    runHillClimbingBenchmark(currentOrder);
+    // 3. 执行模拟退火优化顺序
+    // (内部会生成图2数据: SA_Convergence_xxx.csv)
     std::vector<int> bestOrder = simulatedAnnealing(currentOrder);
 
-    // 4. 计算最终结果
+    // 4. 使用 DP 计算最终的最优方向组合和成本
     auto result = evaluateSequenceWithDP(bestOrder);
+    double dpCost = result.first;             // 最优成本
+    std::vector<bool> dpFlags = result.second; // 最优方向组合
 
-    // 5. 提交结果
-    commitResult(bestOrder, result.second, result.first);
+    // 5. 提交最终结果到成员变量
+    commitResult(bestOrder, dpFlags, dpCost);
+
+    // ============================================================
+    // [图 3 数据生成] 不同方向决策策略的成本对比
+    // ============================================================
+    // 基于 SA 跑出来的最优顺序 (bestOrder)，比较如果方向没选对会怎样
+
+    int n = static_cast<int>(bestOrder.size());
+
+   
+    // 假设所有路径都按建模方向 (Start->End) 执行
+    std::vector<bool> fixedFlags(n, true);
+    // 如果有起点约束，第一个必须遵守，其他的保持默认正向
+    if (startPathIndex != -1) {
+        fixedFlags[0] = startEntryIsStart;
+    }
+    double fixedCost = calculateFixedSequenceCost(bestOrder, fixedFlags);
+
+    // --- 策略 C: Random (随机方向) ---
+    // 模拟完全不思考方向，随机乱选的情况 (取100次平均值以具有统计意义)
+    double randomCostSum = 0.0;
+    int sampleCount = 100;
+    std::uniform_int_distribution<int> distBool(0, 1);
+
+    for (int k = 0; k < sampleCount; ++k) {
+        std::vector<bool> randFlags(n);
+        for (int i = 0; i < n; ++i) {
+            randFlags[i] = (distBool(rng) == 1);
+        }
+        // 必须遵守起点约束
+        if (startPathIndex != -1) {
+            randFlags[0] = startEntryIsStart;
+        }
+
+        randomCostSum += calculateFixedSequenceCost(bestOrder, randFlags);
+    }
+    double randomCost = randomCostSum / sampleCount;
+
+    // --- 策略 D: Greedy (局部贪心方向) ---
+    // 模拟每一步只看眼前：选离上一步出口最近的那个端点进入
+    std::vector<bool> greedyFlags(n);
+
+    // 第一步：遵守约束或默认正向
+    greedyFlags[0] = (startPathIndex != -1) ? startEntryIsStart : true;
+
+    for (int i = 1; i < n; ++i) {
+        int prevIdx = bestOrder[i - 1];
+        bool prevEntry = greedyFlags[i - 1];
+        int currIdx = bestOrder[i];
+
+        // 获取上一步的出口点
+        NXOpen::Point3d prevExit = ExitPoint(paths[prevIdx], prevEntry);
+
+        // 比较：进Start更近 还是 进End更近？
+        double dStart = PointDistance(prevExit, paths[currIdx].start);
+        double dEnd = PointDistance(prevExit, paths[currIdx].end);
+
+        // 谁近选谁: dStart小则 entry=true(Start), dEnd小则 entry=false(End)
+        greedyFlags[i] = (dStart < dEnd);
+    }
+    double greedyCost = calculateFixedSequenceCost(bestOrder, greedyFlags);
+
+    // --- 写入 CSV 文件 ---
+    std::string csvPath = std::string(LOG_OUTPUT_DIR) + "\\DP_Strategy_Comparison.csv";
+    std::ofstream strategyLog(csvPath);
+    if (strategyLog.is_open()) {
+        strategyLog << "Strategy,TotalDistance\n";
+        strategyLog << "Fixed (Original)," << fixedCost << "\n";
+        strategyLog << "Random (Avg)," << randomCost << "\n";
+        strategyLog << "Greedy (Local)," << greedyCost << "\n";
+        strategyLog << "DP (Optimal)," << dpCost << "\n";
+        strategyLog.close();
+    }
 }
 
 std::vector<int> SprayPathConnector::generateInitialSequence()
@@ -361,6 +439,10 @@ std::vector<int> SprayPathConnector::generateInitialSequence()
     else {
         for (int i = 0; i < n; i++) startCandidates.push_back(i);
     }
+
+    std::ofstream initLog(LOG_OUTPUT_DIR "\\Initialization_Distribution.csv");
+    initLog << "StartNodeID,Cost\n";
+
 
     // 多起点贪心
     for (int startNode : startCandidates) {
@@ -438,6 +520,11 @@ std::vector<int> SprayPathConnector::generateInitialSequence()
         }
 
         double cost = evaluateSequenceWithDP(currentOrder).first;
+
+        // ================= [文件 1] 写入数据 =================
+        initLog << startNode << "," << cost << "\n";
+        // ====================================================
+
         if (cost < minTotalDist) {
             minTotalDist = cost;
             bestOrder = currentOrder;
@@ -469,6 +556,30 @@ std::vector<int> SprayPathConnector::simulatedAnnealing(const std::vector<int>& 
     std::uniform_real_distribution<double> distReal(0.0, 1.0);
     std::uniform_int_distribution<int> distOp(0, 2);
 
+
+    // ================= [文件 2] 准备日志 =================
+    std::ofstream plotLog;
+    // 生成带时间戳的文件名
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+    struct tm timeinfo;
+    localtime_s(&timeinfo, &now_time);
+
+    std::stringstream ss;
+    ss << LOG_OUTPUT_DIR << "\\SA_Convergence_"
+        << (timeinfo.tm_year + 1900) << std::setfill('0') << std::setw(2) << (timeinfo.tm_mon + 1)
+        << std::setfill('0') << std::setw(2) << timeinfo.tm_mday << "_"
+        << std::setfill('0') << std::setw(2) << timeinfo.tm_hour
+        << std::setfill('0') << std::setw(2) << timeinfo.tm_min
+        << std::setfill('0') << std::setw(2) << timeinfo.tm_sec << ".csv";
+
+    plotLog.open(ss.str());
+    if (plotLog.is_open()) {
+        plotLog << "Iteration,Temperature,CurrentCost,BestCost\n";
+    }
+    // ====================================================
+
+
     // (修改点 D: 移除 T > T_min 的强制退出，确保跑够 maxIter，或者 T_min 设得极小)
     for (int iter = 0; iter < maxIter; iter++) {
         std::vector<int> nextOrder = currentOrder;
@@ -491,13 +602,21 @@ std::vector<int> SprayPathConnector::simulatedAnnealing(const std::vector<int>& 
             }
         }
 
+
+        // ================= [文件 2] 记录每一代 =================
+        if (plotLog.is_open()) {
+            plotLog << iter << "," << T << "," << currentCost << "," << bestCost << "\n";
+        }
+        // ======================================================
+
+
         T *= alpha;
         // 如果温度过低，可以重置一下（Reheating），或者就让它保持低温进行纯爬山
         if (T < 1e-4) T = 1e-4;
     }
 
     // (修改点 G: 删除无效的 logFile 写入)
-
+    if (plotLog.is_open()) plotLog.close();
     return bestOrder;
 }
 
@@ -580,7 +699,7 @@ void SprayPathConnector::printResult() {
 
 
     // 简单实现示例:
-    if (logFile.is_open()) return; // 避免重复打开，或者在 solve 外部控制
+    if (logFile.is_open()) return; 
 
     // 生成带时间戳的文件名 (代码同原 Sequencer)
     time_t now = time(0);
@@ -634,4 +753,86 @@ void SprayPathConnector::createConnectionLines() {
         // 调用 HelpFunction (假设颜色 ID 186)
         CreateTempLine(sp, ep, 186);
     }
+}
+
+double SprayPathConnector::calculateFixedSequenceCost(const std::vector<int>& order, const std::vector<bool>& entryFlags) const
+{
+    if (order.empty()) return 0.0;
+    double totalDist = 0.0;
+
+    // 累加每一段的空移距离
+    for (size_t i = 0; i < order.size() - 1; i++) {
+        int currIdx = order[i];
+        bool currEntry = entryFlags[i];
+        int nextIdx = order[i + 1];
+        bool nextEntry = entryFlags[nextEntry + 1]; 
+
+        // 使用缓存计算距离: exit(curr) -> entry(next)
+        // transitionCost 参数: (aIdx, aEntryIsStart, bIdx, bEntryIsStart)
+        totalDist += transitionCost(currIdx, currEntry, nextIdx, entryFlags[i + 1]);
+    }
+    return totalDist;
+}
+
+void SprayPathConnector::runHillClimbingBenchmark(const std::vector<int>& initOrder)
+{
+    // 1. 初始化
+    std::vector<int> currentOrder = initOrder;
+    double currentCost = evaluateSequenceWithDP(currentOrder).first;
+
+    // 记录全局最优（在爬山法中，currentCost 通常就是最优，直到卡死）
+    double bestCost = currentCost;
+
+    // 2. 准备 CSV 日志
+    std::ofstream hcLog;
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+    struct tm timeinfo;
+    localtime_s(&timeinfo, &now_time);
+
+    std::stringstream ss;
+    // 文件名区别于 SA，标记为 HC (Hill Climbing)
+    ss << LOG_OUTPUT_DIR << "\\HC_Benchmark_"
+        << (timeinfo.tm_year + 1900) << std::setfill('0') << std::setw(2) << (timeinfo.tm_mon + 1)
+        << std::setfill('0') << std::setw(2) << timeinfo.tm_mday << "_"
+        << std::setfill('0') << std::setw(2) << timeinfo.tm_hour
+        << std::setfill('0') << std::setw(2) << timeinfo.tm_min
+        << std::setfill('0') << std::setw(2) << timeinfo.tm_sec << ".csv";
+
+    hcLog.open(ss.str());
+    if (hcLog.is_open()) {
+        // 爬山法没有温度 T，只有 Cost
+        hcLog << "Iteration,CurrentCost,BestCost\n";
+    }
+
+    // 3. 执行爬山 (迭代次数与 SA 保持一致，方便画图对比 X 轴)
+    int maxIter = 6000;
+    if (paths.size() > 50) maxIter = 10000;
+
+    for (int iter = 0; iter < maxIter; iter++) {
+        std::vector<int> nextOrder = currentOrder;
+
+        // 仅使用 2-opt 算子 (这是最强的局部搜索算子)
+        // 注意：这里使用的是随机 2-opt (Stochastic Hill Climbing)
+        // 这比遍历所有邻居的 O(N^2) 2-opt 更快，且与 SA 的随机逻辑可比性更强
+        apply2Opt(nextOrder);
+
+        // DP 评估
+        double nextCost = evaluateSequenceWithDP(nextOrder).first;
+
+        // 核心区别：严格贪婪准则 (只接受变好，绝不接受变差)
+        if (nextCost < currentCost) {
+            currentOrder = nextOrder;
+            currentCost = nextCost;
+            bestCost = currentCost; // 更新最优
+        }
+        // else { 保持原样，拒绝 nextOrder }
+
+        // 记录日志
+        if (hcLog.is_open()) {
+            hcLog << iter << "," << currentCost << "," << bestCost << "\n";
+        }
+    }
+
+    if (hcLog.is_open()) hcLog.close();
 }

@@ -456,7 +456,7 @@ void SpraySequencerandCSVOutputDialog::OptimizeAndDisplayPaths()
     }
 
     if (selectedCurves.size() < 3) {
-        ShowErrorMessage("请至少选择3条曲线才能启动遗传算法优化！");
+        ShowErrorMessage("请至少选择3条曲线才能启动算法优化！");
         return;
     }
 
@@ -489,7 +489,7 @@ void SpraySequencerandCSVOutputDialog::OptimizeAndDisplayPaths()
     // Step 11: 弹窗提示优化完成
     double distance = m_pathSequencer.getBestDistance();
     std::stringstream msg;
-    msg << "遗传算法优化完成！\n\n"
+    msg << "算法优化完成！\n\n"
         << "曲线数量: " << selectedCurves.size() << "\n"
         << "总空移距离: " << std::fixed << std::setprecision(2)
         << distance << " mm\n\n"

@@ -1,0 +1,32 @@
+===== 喷砂路径优化结果 (SA + DP) =====
+路径总数: 28
+最优空移距离: 2861.78 mm
+----------------------------------------
+Step  1: Path  15 | Dir: Start->End
+Step  2: Path  20 | Dir: End->Start
+Step  3: Path   9 | Dir: End->Start
+Step  4: Path  14 | Dir: Start->End
+Step  5: Path  19 | Dir: Start->End
+Step  6: Path  23 | Dir: Start->End
+Step  7: Path   4 | Dir: End->Start
+Step  8: Path  21 | Dir: End->Start
+Step  9: Path  26 | Dir: Start->End
+Step 10: Path  18 | Dir: End->Start
+Step 11: Path  10 | Dir: End->Start
+Step 12: Path  24 | Dir: End->Start
+Step 13: Path  17 | Dir: End->Start
+Step 14: Path   8 | Dir: End->Start
+Step 15: Path   2 | Dir: End->Start
+Step 16: Path  12 | Dir: Start->End
+Step 17: Path   6 | Dir: Start->End
+Step 18: Path  22 | Dir: Start->End
+Step 19: Path   7 | Dir: End->Start
+Step 20: Path  11 | Dir: End->Start
+Step 21: Path   0 | Dir: End->Start
+Step 22: Path  27 | Dir: Start->End
+Step 23: Path  16 | Dir: Start->End
+Step 24: Path  13 | Dir: Start->End
+Step 25: Path   1 | Dir: Start->End
+Step 26: Path   3 | Dir: End->Start
+Step 27: Path   5 | Dir: End->Start
+Step 28: Path  25 | Dir: End->Start

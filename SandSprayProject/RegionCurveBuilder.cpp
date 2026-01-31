@@ -165,7 +165,7 @@ std::vector<RegionBoundaryEdgeInfo> RegionCurveBuilder::OrderBoundaryEdges(
     orderedEdges.push_back(edgeInfos[0]);
     used[0] = true;
 
-    const double tolerance = 0.1;  // 0.01mm
+    const double tolerance = 0.2;  // 0.01mm
 
     // 记录当前边未使用的端点（即下一条边应该连接的点）
     Point3d currentConnectPoint = edgeInfos[0].endpoint;  // 假设从终点开始连接
@@ -304,7 +304,7 @@ RegionCurveBuilder::RegionCurveBuilder()
 {
     m_sprayDiameter = 80;
     m_overlapRatio = 0.1;
-    m_angleThreshold = 65 *  PI / 180;
+    m_angleThreshold = 45 ;
 
     // 初始化边界覆盖参数（基于重叠率的统一模型）
     // 步距 = 直径 × (1 - 重叠率)
